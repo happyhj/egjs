@@ -2,57 +2,53 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-<title>InfiniteGrid</title>
+<title>InfiniteGrid(Masonry)</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi">
 <link rel="stylesheet" href="../../bower_components/bootflat/bootstrap/bootstrap.min.css">
 <link rel="stylesheet" href="../../bower_components/bootflat/css/bootflat.css">
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.1.5/es5-shim.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.1.5/es5-sham.js"></script> -->
 <script src="../../bower_components/jquery/jquery.js"></script>
 <script src="../../bower_components/handlebars/handlebars.js"></script>
-<script src="../../src/module.js"></script>
-<script src="../../src/eg.js"></script>
-<script src="../../src/hook/css.js"></script>
-<script src="../../bower_components/get-style-property/get-style-property.js"></script>
-<script src="../../bower_components/get-size/get-size.js"></script>
-<script src="../../bower_components/matches-selector/matches-selector.js"></script>
-<script src="../../bower_components/eventEmitter/EventEmitter.js"></script>
-<script src="../../bower_components/eventie/eventie.js"></script>
-<script src="../../bower_components/doc-ready/doc-ready.js"></script>
-<script src="../../bower_components/fizzy-ui-utils/utils.js"></script>
-<script src="../../bower_components/outlayer/item.js"></script>
-<script src="../../bower_components/outlayer/outlayer.js"></script>
-<script src="../../src/class.js"></script>
-<script src="../../src/component.js"></script>
-<script src="../../src/infiniteGrid.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/masonry/4.0.0/masonry.pkgd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.0/imagesloaded.pkgd.min.js"></script>
+
+
 <style>
 body {background-color: #f1f2f6;}
-.item {
+.item,
+.grid-item, .grid-sizer {
   width:50%;
   min-height: 1px;
     padding-right: 15px;
     padding-left: 15px;
 }
 @media (min-width: 768px) {
-  .item {
+  .item,
+  .grid-item, .grid-sizer  {
     width : 33.33333333%;
   }
 }
 @media (min-width: 992px) {
-  .item {
+  .item ,
+  .grid-item, .grid-sizer {
     width : 25%;
   }
 }
 @media (min-width: 1200px) {
-  .item {
+  .item,
+  .grid-item, .grid-sizer  {
     width : 16.66666667%;
   }
 }
+
+
 </style>
 </head>
 <body>
 <div class="container">
+
+	
 	<!-- navbar -->
 	<div class="row">
 		<div class="col-md-12">
@@ -76,18 +72,20 @@ body {background-color: #f1f2f6;}
 		<div class="col-md-12">
 			<div class="jumbotron">
 				<div class="jumbotron-contents">
-					<h2>InfiniteGrid Demo</h2>
+					<h2>InfiniteGrid(Masonry) Demo</h2>
 					<p>This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
 				</div>
 			</div>
 		</div>
 	</div>
 	<!-- infinite grid -->
-	<div id="grid" class="row" style="visibility:hidden"></div>
+	<div id="grid" class="row grid" style="visibility:hidden">
+    	<div class="grid-sizer"></div>
+	</div>
 </div>
 <script id="items-template" type="text/x-handlebars-template">
 	{{~#each items~}}
-	<div class="item">
+	<div class="item grid-item">
 		<div class="thumbnail">
 			<img class="img-rounded" src="{{imgSrc}}" />
 			<div class="caption">
@@ -116,41 +114,42 @@ var data = {
 		});
 		return {items: items};
 	}
+};	
+	
+var groupIdx = 0;
+function getItemElement() {
+	return $(template(data.getItems(groupIdx++)));
 };
 
-var loadCnt = 0;
 
-$(function() {
-	var $grid = $("#grid");
-	var ig = new eg.InfiniteGrid("#grid", {
-		count : 60
-	}).on({
-		"append" : function(e) {
-			var gk = this.getGroupKeys();
-			var lastGk = gk[gk.length-1];
-			lastGk++;
-			ig.append(template(data.getItems(lastGk)), lastGk);
-
-			// bench 
-			loadCnt++;
-			$('.loadCnt').html(loadCnt + "번 추가 로드");
-		},
-		"prepend" : function(e) {
-			var firstGk = this.getGroupKeys()[0];
-			firstGk--;
-			if(firstGk >= 0) {
-				ig.prepend(template(data.getItems(firstGk)), firstGk);
-			}
-		},
-		"layoutComplete" : function(e) {
-			$grid.css("visibility", "visible");
-		}
-	});
-
-	ig.append(template(data.getItems(0)), 0);
+var msnry = new Masonry( '.grid', {
+	columnWidth: '.grid-sizer',
+	percentPosition: true,
+	transitionDuration: 0
 });
-</script>
 
+function appendItem() {
+	var el = getItemElement();
+	$(msnry.element).append( el );
+	imagesLoaded(  document.querySelector('.grid'), function() {
+		msnry.appended( el );
+		$('.grid').css("visibility", "visible");
+	});	
+}
+
+var loadCnt = 0;
+window.addEventListener('scroll', function() {
+	if(window.scrollY + window.innerHeight >= parseInt(window.getComputedStyle(document.documentElement).height)) {
+		appendItem();
+
+		// bench 
+		loadCnt++;
+		$('.loadCnt').html(loadCnt + "번 추가 로드");
+	}
+});
+appendItem();
+
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
 <script>
@@ -207,6 +206,5 @@ $('.stopBtn').on('click',function() {
 	clearInterval(timer);
 });
 </script>
-
 </body>
 </html>
